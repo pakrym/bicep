@@ -5,8 +5,12 @@ using Bicep.Core.UnitTests.Assertions;
 using Bicep.Core.UnitTests.Utils;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 
 namespace Bicep.Cli.IntegrationTests
 {
@@ -185,6 +189,49 @@ resource roleAssignmentName_resource 'Microsoft.Authorization/roleAssignments@20
     principalId: principalId
   }
 }");
+        }
+
+        [TestMethod]
+        // https://github.com/azure/bicep/issues/3636
+        public void Test_Issue3636()
+        {
+            var stringLength = 200;
+            var lineCount = 10000;
+
+            Random random = new Random();
+            string RandomString(int length)
+            {
+                const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                return new string(Enumerable.Repeat(chars, length)
+#pragma warning disable CA5394 // Do not use insecure randomness
+                  .Select(s => s[random.Next(s.Length)]).ToArray());
+#pragma warning restore CA5394 // Do not use insecure randomness
+            }
+
+            var file = "";
+            for (var i = 0; i < lineCount; i++)
+            {
+                file += $"output test{i} string = '{RandomString(stringLength)}'\n";
+            }
+
+            // just warm up - throw away the results
+            CompilationHelper.Compile(file).Should().NotHaveAnyDiagnostics();
+
+            const int samplesCount = 5;
+            var samples = new List<long>(samplesCount);
+            for(int i = 0; i < samplesCount; i++)
+            {
+                var sw = Stopwatch.StartNew();
+
+                CompilationHelper.Compile(file).Should().NotHaveAnyDiagnostics();
+
+                sw.Stop();
+                samples.Add(sw.ElapsedMilliseconds);
+                this.TestContext.WriteLine($"Sample {i} = {sw.ElapsedMilliseconds} ms");
+            }
+
+            var avg = samples.Average();
+            this.TestContext.WriteLine($"Avg = {avg} ms");
         }
     }
 }
