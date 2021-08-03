@@ -14,7 +14,9 @@ using Moq;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Bicep.Core.UnitTests.Registry
 {
@@ -54,16 +56,20 @@ namespace Bicep.Core.UnitTests.Registry
         }
 
         [TestMethod]
-        public void NoRegistries_NonValidateMethods_ShouldThrow()
+        [SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Not needed")]
+        public async Task NoRegistries_NonValidateMethods_ShouldThrow()
         {
             var module = CreateModule("fakeScheme:fakeModule");
             var moduleDispatcher = CreateDispatcher();
 
-            static void ExpectFailure(Action fail) => fail.Should().Throw<InvalidOperationException>().WithMessage($"The specified module is not valid. Call {nameof(IModuleDispatcher.ValidateModuleReference)}() first.");
+            Action isAvailableFail = () => moduleDispatcher.IsModuleAvailable(module, out _);
+            isAvailableFail.Should().Throw<InvalidOperationException>().WithMessage($"The specified module is not valid. Call {nameof(IModuleDispatcher.ValidateModuleReference)}() first.");
 
-            ExpectFailure(() => moduleDispatcher.IsModuleAvailable(module, out _));
-            ExpectFailure(() => moduleDispatcher.TryGetLocalModuleEntryPointUri(new Uri("untitled://two"), module, out _));
-            ExpectFailure(() => moduleDispatcher.RestoreModules(new[] { module }));
+            Action entryPointFail = () => moduleDispatcher.TryGetLocalModuleEntryPointUri(new Uri("untitled://two"), module, out _);
+            entryPointFail.Should().Throw<InvalidOperationException>().WithMessage($"The specified module is not valid. Call {nameof(IModuleDispatcher.ValidateModuleReference)}() first.");
+
+            Func<Task> restoreFail = async () => await moduleDispatcher.RestoreModules(new[] { module });
+            await restoreFail.Should().ThrowAsync<InvalidOperationException>().WithMessage($"The specified module is not valid. Call {nameof(IModuleDispatcher.ValidateModuleReference)}() first.");
         }
 
         [TestMethod]
@@ -80,7 +86,8 @@ namespace Bicep.Core.UnitTests.Registry
         }
 
         [TestMethod]
-        public void MockRegistries_ModuleLifecycle()
+        [SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Not needed")]
+        public async Task MockRegistries_ModuleLifecycle()
         {
             var fail = Repository.Create<IModuleRegistry>();
             fail.Setup(m => m.Scheme).Returns("fail");
@@ -115,7 +122,7 @@ namespace Bicep.Core.UnitTests.Registry
                 .Returns(new Uri("untitled://validRef3"));
 
             mock.Setup(m => m.RestoreModules(It.IsAny<IEnumerable<ModuleReference>>()))
-                .Returns(new Dictionary<ModuleReference, DiagnosticBuilder.ErrorBuilderDelegate>
+                .ReturnsAsync(new Dictionary<ModuleReference, DiagnosticBuilder.ErrorBuilderDelegate>
                 {
                     [validRef3] = x => new ErrorDiagnostic(x.TextSpan, "RegFail", "Failed to restore module")
                 });
@@ -152,7 +159,7 @@ namespace Bicep.Core.UnitTests.Registry
             dispatcher.TryGetLocalModuleEntryPointUri(new Uri("mock://mock"), goodModule3, out var entryPointBuilder3).Should().Be(new Uri("untitled://validRef3"));
             entryPointBuilder3!.Should().BeNull();
 
-            dispatcher.RestoreModules(new[] { goodModule, goodModule3 }).Should().BeTrue();
+            (await dispatcher.RestoreModules(new[] { goodModule, goodModule3 })).Should().BeTrue();
 
             dispatcher.IsModuleAvailable(goodModule3, out var goodAvailabilityBuilder3AfterRestore).Should().BeFalse();
             goodAvailabilityBuilder3AfterRestore!.Should().HaveCode("RegFail");

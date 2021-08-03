@@ -58,7 +58,7 @@ namespace Bicep.LanguageServer.Registry
         public void Start()
         {
             this.CheckDisposed();
-            this.consumerTask = Task.Factory.StartNew(this.ProcessQueueItems, this.cancellationTokenSource.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            this.consumerTask = Task.Run(this.ProcessQueueItemsAsync, this.cancellationTokenSource.Token);
         }
 
         public async ValueTask DisposeAsync()
@@ -86,7 +86,7 @@ namespace Bicep.LanguageServer.Registry
             }
         }
 
-        private void ProcessQueueItems()
+        private async Task ProcessQueueItemsAsync()
         {
             var token = this.cancellationTokenSource.Token;
             while (true)
@@ -107,7 +107,7 @@ namespace Bicep.LanguageServer.Registry
                 // this blocks until restore is completed
                 // the dispatcher stores the results internally and manages their lifecycle
                 token.ThrowIfCancellationRequested();
-                if(!this.moduleDispatcher.RestoreModules(references))
+                if(!await this.moduleDispatcher.RestoreModules(references))
                 {
                     // nothing needed to be restored
                     // no need to notify about completion

@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Bicep.Core.Registry
 {
@@ -45,12 +46,12 @@ namespace Bicep.Core.Registry
             return GetEntryPointUri(typed);
         }
 
-        public IDictionary<ModuleReference, DiagnosticBuilder.ErrorBuilderDelegate> RestoreModules(IEnumerable<ModuleReference> references)
+        public async Task<IDictionary<ModuleReference, DiagnosticBuilder.ErrorBuilderDelegate>> RestoreModules(IEnumerable<ModuleReference> references)
         {
             var statuses = new Dictionary<ModuleReference, DiagnosticBuilder.ErrorBuilderDelegate>();
             foreach(var reference in references.OfType<OciArtifactModuleReference>())
             {
-                var result = this.client.PullAsync(reference).Result;
+                var result = await this.client.PullAsync(reference);
 
                 if (!result.Success)
                 {

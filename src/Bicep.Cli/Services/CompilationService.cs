@@ -36,7 +36,7 @@ namespace Bicep.Cli.Services
             var inputUri = PathHelper.FilePathToFileUrl(inputPath);
 
             var sourceFileGrouping = SourceFileGroupingBuilder.Build(this.fileResolver, this.moduleDispatcher, this.workspace, inputUri);
-            if (moduleDispatcher.RestoreModules(sourceFileGrouping.ModulesToRestore))
+            if (moduleDispatcher.RestoreModules(sourceFileGrouping.ModulesToRestore).Result)
             {
                 // modules had to be restored - recompile
                 sourceFileGrouping = SourceFileGroupingBuilder.Rebuild(moduleDispatcher, new Workspace(), sourceFileGrouping);

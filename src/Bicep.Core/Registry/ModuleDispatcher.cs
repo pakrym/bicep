@@ -10,6 +10,7 @@ using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace Bicep.Core.Registry
 {
@@ -82,7 +83,7 @@ namespace Bicep.Core.Registry
             throw new NotImplementedException($"Unexpected module reference type '{refType.Name}'");
         }
 
-        public bool RestoreModules(IEnumerable<ModuleDeclarationSyntax> modules)
+        public async Task<bool> RestoreModules(IEnumerable<ModuleDeclarationSyntax> modules)
         {
             // WARNING: The various operations on ModuleReference objects here rely on the custom Equals() implementation and NOT on object identity
 
@@ -103,7 +104,7 @@ namespace Bicep.Core.Registry
             // send each set of refs to its own registry
             foreach (var scheme in this.registries.Keys.Where(refType => referencesByScheme.Contains(refType)))
             {
-                var restoreStatuses = this.registries[scheme].RestoreModules(referencesByScheme[scheme]);
+                var restoreStatuses = await this.registries[scheme].RestoreModules(referencesByScheme[scheme]);
 
                 // update restore status for each failed module restore
                 foreach(var (failedReference, failureBuilder) in restoreStatuses)
