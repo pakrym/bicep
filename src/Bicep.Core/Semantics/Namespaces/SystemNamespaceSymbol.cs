@@ -673,6 +673,20 @@ namespace Bicep.Core.Semantics.Namespaces
                 .WithEvaluator(MergeToTargetObject("maxValue", SingleArgumentSelector))
                 .Build();
 
+
+            yield return new DecoratorBuilder("app")
+                .WithDescription("Defines the path to the application.")
+                .WithRequiredParameter("path", LanguageConstants.String, "The path to application to deploy.")
+                .WithFlags(FunctionFlags.ResourceDecorator)
+                .Build();
+
+            yield return new DecoratorBuilder("uses")
+                .WithDescription("Defines a relashionship between resources.")
+                .WithRequiredParameter("resource", LanguageConstants.ResourceRef, "The resource to use.")
+                .WithOptionalParameter("roles", LanguageConstants.String, "The roles to apply")
+                .WithFlags(FunctionFlags.ResourceDecorator)
+                .Build();
+
             yield return new DecoratorBuilder("minLength")
                 .WithDescription("Defines the minimum length of the parameter.")
                 .WithRequiredParameter("length", LanguageConstants.Int, "The minimum length.")

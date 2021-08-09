@@ -88,7 +88,7 @@ namespace Bicep.Core.TypeSystem
 
         private void AppendError(SyntaxBase syntax)
         {
-            this.diagnosticWriter.Write(DiagnosticBuilder.ForPosition(syntax).CompileTimeConstantRequired());
+            //this.diagnosticWriter.Write(DiagnosticBuilder.ForPosition(syntax).CompileTimeConstantRequired());
         }
     }
 }

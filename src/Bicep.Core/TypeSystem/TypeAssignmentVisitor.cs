@@ -424,13 +424,13 @@ namespace Bicep.Core.TypeSystem
                 }
             }
 
-            foreach (var (decorator, duplicateDecoratorSyntaxes) in decoratorSyntaxesByMatchingDecorator.Where(x => x.Value.Count > 1))
-            {
-                foreach (var decoratorSyntax in duplicateDecoratorSyntaxes)
-                {
-                    diagnostics.Write(DiagnosticBuilder.ForPosition(decoratorSyntax).DuplicateDecorator(decorator.Overload.Name));
-                }
-            }
+            // foreach (var (decorator, duplicateDecoratorSyntaxes) in decoratorSyntaxesByMatchingDecorator.Where(x => x.Value.Count > 1))
+            // {
+            //     foreach (var decoratorSyntax in duplicateDecoratorSyntaxes)
+            //     {
+            //         diagnostics.Write(DiagnosticBuilder.ForPosition(decoratorSyntax).DuplicateDecorator(decorator.Overload.Name));
+            //     }
+            // }
         }
 
         public override void VisitVariableDeclarationSyntax(VariableDeclarationSyntax syntax)
