@@ -10,6 +10,7 @@ using Azure.Deployments.Core.Extensions;
 using Bicep.Core.CodeAction;
 using Bicep.Core.Extensions;
 using Bicep.Core.Modules;
+using Bicep.Core.Navigation;
 using Bicep.Core.Parsing;
 using Bicep.Core.Resources;
 using Bicep.Core.Semantics;
@@ -225,13 +226,11 @@ namespace Bicep.Core.Diagnostics
                     ? $" from source declaration \"{sourceDeclaration.Name}\""
                     : string.Empty;
 
-                var newSyntax = objectSyntax;
-                foreach (var property in properties)
-                {
-                    newSyntax = newSyntax.MergeProperty(property, "");
-                }
+                var newSyntax = objectSyntax.AddChildrenWithFormatting(
+                    properties.Select(p => SyntaxFactory.CreateObjectProperty(p, SyntaxFactory.SkippedTrivia))
+                );
 
-                var codeFix = new CodeFix("Add required properties", true, new CodeReplacement(objectSyntax.CloseBrace.Span, newSyntax.In));
+                var codeFix = new CodeFix("Add required properties", true, new CodeReplacement(objectSyntax.Span, newSyntax.ToTextPreserveFormatting()));
 
                 return new FixableDiagnostic(
                     TextSpan,

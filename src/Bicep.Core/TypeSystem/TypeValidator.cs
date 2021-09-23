@@ -451,7 +451,8 @@ namespace Bicep.Core.TypeSystem
 
             var missingRequiredProperties = targetType.Properties.Values
                 .Where(p => p.Flags.HasFlag(TypePropertyFlags.Required) && !namedPropertyMap.ContainsKey(p.Name))
-                .OrderBy(p => p.Name);
+                .Select(p => p.Name)
+                .OrderBy(p => p);
 
             if (missingRequiredProperties.Any())
             {
